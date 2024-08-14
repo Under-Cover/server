@@ -4,6 +4,7 @@ const { createServer } = require("node:http");
 const { Server } = require("socket.io");
 
 const app = express();
+const PORT = process.env.PORT || 3000;
 
 const server = createServer(app);
 const io = new Server(server, {
@@ -29,7 +30,7 @@ let temaList = [
   ["Basket", "Voli"],
   ["Kopi", "Teh"],
   ["Pensil", "Pulpen"],
-  ["Laptop", "Komputer"]
+  ["Laptop", "Komputer"],
 ];
 
 let tema = temaList[Math.floor(Math.random() * temaList.length)];
@@ -72,9 +73,9 @@ io.on("connection", (socket) => {
     io.emit("messages:broadcast", messages);
   });
 
-  socket.on('/messages/get', () => {
+  socket.on("/messages/get", () => {
     io.emit("messages:broadcast", messages);
-  })
+  });
 
   // kita akan bikin lister/events
   // socket.on("/player/create", ({ playerName }) => {
@@ -138,6 +139,6 @@ io.on("connection", (socket) => {
   });
 });
 
-server.listen(3000, () => {
+server.listen(PORT, () => {
   console.log("server running at http://localhost:3000");
 });
