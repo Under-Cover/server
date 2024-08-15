@@ -3,8 +3,8 @@ const { createServer } = require("node:http");
 // integrate socket.io
 const { Server } = require("socket.io");
 
+const PORT = process.env.PORT || 3000
 const app = express();
-const PORT = process.env.PORT || 3000;
 
 const server = createServer(app);
 const io = new Server(server, {
@@ -23,6 +23,7 @@ let players = [];
 let undercover = "";
 let vote = {};
 let totalVoters = 0;
+let kartuindex
 let temaList = [
   ["nasi goreng", "nasi uduk"],
   ["paris", "london"],
@@ -30,8 +31,11 @@ let temaList = [
   ["Basket", "Voli"],
   ["Kopi", "Teh"],
   ["Pensil", "Pulpen"],
-  ["Laptop", "Komputer"],
+  ["Laptop", "Komputer"]
 ];
+let cardStates 
+let listCard = [false, false, false, false]
+
 
 let tema = temaList[Math.floor(Math.random() * temaList.length)];
 let temaUndercover = tema[Math.floor(Math.random() * tema.length)];
@@ -39,25 +43,54 @@ let temaNonUndercover = tema.filter((tema) => {
   return tema !== temaUndercover;
 });
 // realtime pake yang dibawah ini
+// io.emit("terserah:broadcast", cardStates)
 io.on("connection", (socket) => {
   // update table user add socketId
   console.log("a user connected", socket.id);
-
+  console.log(cardStates, "maunua si dapettt");
+  io.emit("awikwokwok", kartuindex);
   socket.on("new-player", ({ sender }) => {
+    console.log(players,sender, "<<<<<<<<<");
     if (!players.includes(sender)) {
+      console.log(players.length, "masuk ga?");
       players.push(sender);
+      if (players.length > 4){
+        console.log("KELEBIHAN BOSSSSSSS");
+
+        io.emit("kelebihan", {messages: "WADUH udah penuh nih! tunggu ya!", sender})
+        players.pop()
+      }
       if (players.length === 4) {
         undercover = players[Math.floor(Math.random() * players.length)];
-        console.log(temaNonUndercover);
-        console.log(temaUndercover);
+        console.log(temaNonUndercover, "non under");
+        console.log(temaUndercover, "under");
 
         io.emit("choosedPlayer", undercover, temaUndercover, temaNonUndercover);
       }
     }
     io.emit("player:broadcast", players);
-    console.log(players);
-    console.log(undercover);
+    // console.log(players);
+    // console.log(undercover);
   });
+
+  socket.on('setawik', ({i}) => {
+    kartuindex = i
+    io.emit("awikwok", kartuindex);
+    console.log(kartuindex);
+    
+  })
+
+socket.on("terserah", ({i}) => {
+  console.log(players);
+  console.log(i);
+  cardStates = i
+  listCard[i] = true
+  io.emit("terserah:broadcast", cardStates)
+  console.log(listCard, "<<<<<<<<<<");
+
+})
+
+
 
   if (players.length === 4) {
     io.emit("choosedPlayer", undercover, temaUndercover, temaNonUndercover);
@@ -73,9 +106,9 @@ io.on("connection", (socket) => {
     io.emit("messages:broadcast", messages);
   });
 
-  socket.on("/messages/get", () => {
+  socket.on('/messages/get', () => {
     io.emit("messages:broadcast", messages);
-  });
+  })
 
   // kita akan bikin lister/events
   // socket.on("/player/create", ({ playerName }) => {
@@ -119,6 +152,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("ended", ({ ended }) => {
+    kartuindex = null
     messages = [];
     players = [];
     undercover = "";
